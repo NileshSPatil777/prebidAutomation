@@ -24,7 +24,7 @@ async.waterfall(
       const xlData = XLSX.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
       let dpList = [];
       xlData.forEach((data) => {dpList.push(Object.values(data)[0]);});
-      let schainSupportedDps,gdprSupportedDps, ccpaSupportedDps, tcf2SupportedDps;
+      let schainSupportedDps,gdprSupportedDps, ccpaSupportedDps, tcf2SupportedDps,gdprUrlVal,ccpaUrlVal;
       async.parallel({
         getSchainSupportedDPs : function(outerPcallback){
           request(schainUrl, function (error, response, body) {
@@ -173,8 +173,30 @@ async.waterfall(
                         })
                       },
                       (displayCode, innerWcallback) =>{
-                          dpDetails.gdprUrlVal = allReqUrlResult.gdprSupportedDps.includes(displayCode);
-                          dpDetails.ccpaUrlVal = allReqUrlResult.ccpaSupportedDps.includes(displayCode); 
+                          gdprUrlVal = allReqUrlResult.gdprSupportedDps.includes(displayCode);
+                          ccpaUrlVal = allReqUrlResult.ccpaSupportedDps.includes(displayCode);
+                          dpDetails.gdprUrlVal = gdprUrlVal;
+                          if(gdprDocUrl && gdprUrlVal == true){
+                            dpDetails.gdpr = true;
+                          }
+                          else if(gdprDocUrl && gdprUrlVal == false){
+                            dpDetails.gdpr = false;
+                          }
+                          else{
+                            dpDetails.gdpr = "Recheck";
+                          }
+
+                          dpDetails.ccpaUrlVal = ccpaUrlVal;
+                          if(ccpaDocUrl && ccpaUrlVal == true){
+                            dpDetails.ccpa = true;
+                          }
+                          else if(ccpaDocUrl && ccpaUrlVal == false){
+                            dpDetails.ccpa = false;
+                          }
+                          else{
+                            dpDetails.ccpa = "Recheck";
+                          }
+ 
                           let toMatchDp = new RegExp(dp, 'gi');
                           let dpData = allReqUrlResult.tcf2SupportedDps.match(toMatchDp);
                           if (dpData != null) {
