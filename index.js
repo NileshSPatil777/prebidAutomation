@@ -4,17 +4,18 @@ const request = require("request");
 const async = require("async");
 const XLSX = require("xlsx");
 const cheerio = require("cheerio");
+const { val } = require("cheerio/lib/api/attributes");
 const version = "5.9.0";
-const fileName ="dp_list_test.xlsx";
+const fileName = "dp_list_test.xlsx";
 const workbook = XLSX.readFile(`./${fileName}`);
 const docUrl = "https://docs.prebid.org/dev-docs/bidders/";
 const tcf2Link = "https://iabeurope.eu/vendor-list-tcf-v2-0/";
 const baseUrl = `https://github.com/prebid/Prebid.js/blob/${version}/modules/`;
 const gdprDocUrl = "https://docs.prebid.org/dev-docs/modules/consentManagement.html#adapters-supporting-gdpr";
-const ccpaDocUrl= "https://docs.prebid.org/dev-docs/modules/consentManagementUsp.html#adapters-supporting-us-privacy--ccpa";
+const ccpaDocUrl = "https://docs.prebid.org/dev-docs/modules/consentManagementUsp.html#adapters-supporting-us-privacy--ccpa";
 const schainUrl = "https://docs.prebid.org/dev-docs/modules/schain.html";
 const dpUrlArray = [];
-var readMeUrl, jsUrl;
+var readMeUrl, jsUrl,GVLid;
 
 async.waterfall(
   [
@@ -23,197 +24,217 @@ async.waterfall(
       const sheet_name_list = workbook.SheetNames;
       const xlData = XLSX.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
       let dpList = [];
-      xlData.forEach((data) => {dpList.push(Object.values(data)[0]);});
-      let schainSupportedDps,gdprSupportedDps, ccpaSupportedDps, tcf2SupportedDps,gdprUrlVal,ccpaUrlVal;
+      xlData.forEach((data) => { dpList.push(Object.values(data)[0]); });
+      let schainSupportedDps, gdprSupportedDps, ccpaSupportedDps, tcf2SupportedDps, gdprUrlVal, ccpaUrlVal, schainUrlVal;
       async.parallel({
-        getSchainSupportedDPs : function(outerPcallback){
+        getSchainSupportedDPs: function (outerPcallback) {
           request(schainUrl, function (error, response, body) {
             if (!error && response.statusCode == 200) {
               const $ = cheerio.load(body);
               if ($("body > div.container.pb-docs-container > div > div.col-lg-9 > div > div.adapters > div.schain_supported")) {
                 schainSupportedDps = $("body > div.container.pb-docs-container > div > div.col-lg-9 > div > div.adapters > div.schain_supported").text();
-                outerPcallback(null,schainSupportedDps);
+                outerPcallback(null, schainSupportedDps);
               }
             } else {
-                console.log("Unable to get values of schainSupportedDps. Please Check schainUrlVal manually !");
-                outerPcallback("Error",schainSupportedDps);
+              console.log("Unable to get values of schainSupportedDps. Please Check schainUrlVal manually !");
+              outerPcallback("Error", schainSupportedDps);
             }
           });
         },
-        gdprSupportedDps : function(outerPcallback){
-          request(gdprDocUrl, function(error, response, body){
+        gdprSupportedDps: function (outerPcallback) {
+          request(gdprDocUrl, function (error, response, body) {
             if (!error && response.statusCode == 200) {
               const $ = cheerio.load(body);
               gdprSupportedDps = ($('body').find('script:contains("idx_gdpr")').html());
               outerPcallback(null, gdprSupportedDps)
-            }else{
+            } else {
               outerPcallback(error, gdprSupportedDps);
             }
           });
         },
-        ccpaSupportedDps : function(outerPcallback){
-          request(ccpaDocUrl, function(error, response, body){
+        ccpaSupportedDps: function (outerPcallback) {
+          request(ccpaDocUrl, function (error, response, body) {
             if (!error && response.statusCode == 200) {
               const $ = cheerio.load(body);
               ccpaSupportedDps = ($('body').find('script:contains("idx_usp")').html());
               outerPcallback(null, ccpaSupportedDps);
-            }else{
+            } else {
               outerPcallback(error, ccpaSupportedDps)
             }
           });
         },
-        tcf2SupportedDps : function(outerPcallback){
-          request( tcf2Link , function (error, response, body) {
+        tcf2SupportedDps: function (outerPcallback) {
+          request(tcf2Link, function (error, response, body) {
             if (!error && response.statusCode == 200) {
-            const $ = cheerio.load(body);
-            //let toMatchDp = new RegExp(dp, 'gi');
-            tcf2SupportedDps = $(`table:contains()`).text();
-            //var dpData = check.match(toMatchDp); 
-            outerPcallback(null, tcf2SupportedDps); 
-            }else{
-            outerPcallback('Error', tcf2SupportedDps); 
+              const $ = cheerio.load(body);
+              //let toMatchDp = new RegExp(dp, 'gi');
+              tcf2SupportedDps = $(`table:contains()`).text();
+              //var dpData = check.match(toMatchDp); 
+              outerPcallback(null, tcf2SupportedDps);
+            } else {
+              outerPcallback('Error', tcf2SupportedDps);
             }
-           })
-        }
-      }, function(err, pResult){
+          })
+        },
+        tcf2JsonGvl: function(outerPcallback){
+          let tcf2JsonUrl = "https://vendor-list.consensu.org/v2/vendor-list.json";
+            let options = { json: true };
+            request(tcf2JsonUrl, options, (error, res, body) => {
+              if (error) {
+                outerPcallback("Absent","");
+              }
+              else {
+                outerPcallback(null,body);
+              }
+        })
+      }
+      }, function (err, pResult) {
         console.log('---->> final p call back', pResult)
         //process.exit();
-        if(err) wCallback(err, dpList, pResult)
-        else  wCallback(null, dpList, pResult)
+        if (err) wCallback(err, dpList, pResult)
+        else wCallback(null, dpList, pResult)
       })
     },
     //convert dplist into array and generate prebid doc link
     (dpList, allReqUrlResult, wCallback) => {
-        console.log("Inside next function");
-        async.eachSeries(
+      console.log("Inside next function");
+      async.eachSeries(
         dpList,
         function (dp, eCallback) {
-          console.log('Processing for -->>', dp) 
+          console.log('Processing for -->>', dp)
           //process.exit(); 
           let dpDetails = {};
           dpDetails.code = dp;
+          function getSchainGdprCcpaVal(docVal, urlVal) {
+            if (docVal == urlVal)
+              return urlVal;
+            else
+              return "Recheck";
+          }
+          function getTcf2JsonVal(dpname) {
+            for (const vendor of Object.values(allReqUrlResult.tcf2JsonGvl.vendors)) {
+              const map = new Map(Object.entries(vendor));
+              if (map.get("name").includes(dpname)) {
+                GVLid = map.get("id");
+                // console.log(GVLid);
+                return GVLid;
+              }
+            }
+          }
           async.parallel(
-            {
+            { 
               getPrebidDocUrl: function (pCallback) {
-                  async.waterfall([
-                      (innerWcallback) =>{
-                        request(docUrl + dp, function (error, response, body) {
-                            if (!error && response.statusCode == 200) {
-                                const $ = cheerio.load(body);
-                                if ($('.bs-docs-section').find('h2').first()) {
-                                    var displayCode = $('.bs-docs-section').find('h2').first().text();
-                                    if (displayCode != undefined) {
-                                        dpDetails.displayName = displayCode;
-                                        dpDetails.schainUrlVal = allReqUrlResult.getSchainSupportedDPs.includes(dpDetails.displayName);
-                                    }
-                                }
-                                dpDetails.prebiDocUrl = docUrl + dp;
-                                const gdprDocVal = $(
-                                  "tr:contains(GDPR TCF Support)> td:nth-child(4)"
-                                ).text();
-                                const ccpaDocVal = $(
-                                  "tr:contains(USP/CCPA Support)> td:nth-child(4)"
-                                ).text();
-                                const schainDocVal = $(
-                                  "tr:contains(Supply Chain Support)> td:nth-child(2)"
-                                ).text();
-                                const gvlIdDocVal = $(
-                                  "tr:contains(IAB GVL ID)> td:nth-child(2)"
-                                ).text();
-                                const mediaTypesDocVal = $(
-                                  "tr:contains(Media Types)> td:nth-child(2)"
-                                ).text();
-            
-                               
-            
-                                dpDetails.gdprDocVal = stringToBoolean(gdprDocVal);
-                                dpDetails.ccpaDocVal = stringToBoolean(ccpaDocVal);
-                                dpDetails.schainDocVal = stringToBoolean(schainDocVal);
-                                dpDetails.gvlIdDocVal = gvlIdDocVal;
-                                dpDetails.mediaTypesDocVal = mediaTypesDocVal;
-                                var paramObjStr = "";
-            
-                                if($('table:contains("Scope")')){
-                                    var nameIndex, scopeIndex, typeIndex;
-                                    $('table:contains("Scope")').find('thead').each(function(){                           
-                                        $(this).find('tr').find('th').each(function(headingIndex,headingElement){
-                                            if($(this).text().match(/Name/g)) {nameIndex = headingIndex;}
-            
-                                            if($(this).text().match(/Key/g)) {nameIndex = headingIndex;}
-                                        
-                                            if($(this).text().match(/Scope/g)) {scopeIndex = headingIndex;}
-                    
-                                            if($(this).text().match(/Type/g)) {typeIndex = headingIndex;}
-                                        })
-                                    })
-                                    var paramObj ={};
-                                     $('table:contains("Scope")').find('tbody').find('tr').each(function(i,elem){
-                                        $(this).find('td').each(function(index,element){
-                                            var params = $(element).text();
-                                            if(index == nameIndex) {
-                                                paramObj.paramName = params;
-                                            } else if(index == scopeIndex){
-                                                paramObj.required = params;
-                                            } else if(index == typeIndex){
-                                                paramObj.paramType = params;
-                                            }
-            
-                                        })  
-                                        paramObjStr = paramObjStr.concat(JSON.stringify(paramObj));
-                                      });                          
-                                }
-                                paramObjStr = paramObjStr.replace("\"","");
-                                paramObjStr = paramObjStr.replace("}/g","},");
-                                dpDetails.BidParams = paramObjStr;  
-                                innerWcallback(null, displayCode);                  
-                              } else {
-                                dpDetails.prebiDocUrl = "prebid doc url not found.";
-                                innerWcallback(error,'');
-                              }
-                        })
-                      },
-                      (displayCode, innerWcallback) =>{
-                          gdprUrlVal = allReqUrlResult.gdprSupportedDps.includes(displayCode);
-                          ccpaUrlVal = allReqUrlResult.ccpaSupportedDps.includes(displayCode);
-                          dpDetails.gdprUrlVal = gdprUrlVal;
-                          if(gdprDocUrl && gdprUrlVal == true){
-                            dpDetails.gdpr = true;
+                async.waterfall([
+                  (innerWcallback) => {
+                    request(docUrl + dp, function (error, response, body) {
+                      if (!error && response.statusCode == 200) {
+                        const $ = cheerio.load(body);
+                        if ($('.bs-docs-section').find('h2').first()) {
+                          var displayCode = $('.bs-docs-section').find('h2').first().text();
+                          if (displayCode != undefined) {
+                            dpDetails.displayName = displayCode;
+                            schainUrlVal = allReqUrlResult.getSchainSupportedDPs.includes(dpDetails.displayName);
                           }
-                          else if(gdprDocUrl && gdprUrlVal == false){
-                            dpDetails.gdpr = false;
-                          }
-                          else{
-                            dpDetails.gdpr = "Recheck";
-                          }
+                        }
+                        dpDetails.prebiDocUrl = docUrl + dp;
+                        const gdprDocVal = $(
+                          "tr:contains(GDPR TCF Support)> td:nth-child(4)"
+                        ).text();
+                        const ccpaDocVal = $(
+                          "tr:contains(USP/CCPA Support)> td:nth-child(4)"
+                        ).text();
+                        const schainDocVal = $(
+                          "tr:contains(Supply Chain Support)> td:nth-child(2)"
+                        ).text();
+                        const gvlIdDocVal = $(
+                          "tr:contains(IAB GVL ID)> td:nth-child(2)"
+                        ).text();
+                        const mediaTypesDocVal = $(
+                          "tr:contains(Media Types)> td:nth-child(2)"
+                        ).text();
 
-                          dpDetails.ccpaUrlVal = ccpaUrlVal;
-                          if(ccpaDocUrl && ccpaUrlVal == true){
-                            dpDetails.ccpa = true;
-                          }
-                          else if(ccpaDocUrl && ccpaUrlVal == false){
-                            dpDetails.ccpa = false;
-                          }
-                          else{
-                            dpDetails.ccpa = "Recheck";
-                          }
- 
-                          let toMatchDp = new RegExp(dp, 'gi');
-                          let dpData = allReqUrlResult.tcf2SupportedDps.match(toMatchDp);
-                          if (dpData != null) {
-                            dpDetails.tcf2Val = true;
-                          } else {
-                            dpDetails.tcf2Val =  false;
-                          }
-                          console.log('DP DETAILS-------', dpDetails)
-                          innerWcallback(null)
-                      
+                        dpDetails.gdprDocVal = stringToBoolean(gdprDocVal);
+                        dpDetails.ccpaDocVal = stringToBoolean(ccpaDocVal);
+                        dpDetails.schainDocVal = stringToBoolean(schainDocVal);
+                        dpDetails.gvlIdDocVal = gvlIdDocVal;
+                        dpDetails.mediaTypesDocVal = mediaTypesDocVal;
+                        var paramObjStr = "";
+
+                        if ($('table:contains("Scope")')) {
+                          var nameIndex, scopeIndex, typeIndex;
+                          $('table:contains("Scope")').find('thead').each(function () {
+                            $(this).find('tr').find('th').each(function (headingIndex, headingElement) {
+                              if ($(this).text().match(/Name/g)) { nameIndex = headingIndex; }
+
+                              if ($(this).text().match(/Key/g)) { nameIndex = headingIndex; }
+
+                              if ($(this).text().match(/Scope/g)) { scopeIndex = headingIndex; }
+
+                              if ($(this).text().match(/Type/g)) { typeIndex = headingIndex; }
+                            })
+                          })
+                          var paramObj = {};
+                          $('table:contains("Scope")').find('tbody').find('tr').each(function (i, elem) {
+                            $(this).find('td').each(function (index, element) {
+                              var params = $(element).text();
+                              if (index == nameIndex) {
+                                paramObj.paramName = params;
+                              } else if (index == scopeIndex) {
+                                paramObj.required = params;
+                              } else if (index == typeIndex) {
+                                paramObj.paramType = params;
+                              }
+
+                            })
+                            paramObjStr = paramObjStr.concat(JSON.stringify(paramObj));
+                          });
+                        }
+                        paramObjStr = paramObjStr.replace("\"", "");
+                        paramObjStr = paramObjStr.replace("}/g", "},");
+                        dpDetails.BidParams = paramObjStr;
+                        innerWcallback(null, displayCode);
+                      } else {
+                        dpDetails.prebiDocUrl = "prebid doc url not found.";
+                        innerWcallback(error, '');
                       }
-                  ], (err, result) => {
-                      if(err){
-                        pCallback(err)
-                      }else{
-                        pCallback(null);                    }
-                  })
+                    })
+                  },
+                  (displayCode, innerWcallback) => {
+                    
+                    
+                    gdprUrlVal = allReqUrlResult.gdprSupportedDps.includes(displayCode);
+                    ccpaUrlVal = allReqUrlResult.ccpaSupportedDps.includes(displayCode);
+
+                    dpDetails.gdprUrlVal = gdprUrlVal;
+                    dpDetails.gdpr = getSchainGdprCcpaVal(dpDetails.gdprDocVal, gdprUrlVal);
+
+                    dpDetails.ccpaUrlVal = ccpaUrlVal;
+                    dpDetails.ccpa = getSchainGdprCcpaVal(dpDetails.ccpaDocVal, ccpaUrlVal);
+
+                    dpDetails.schainUrlVal = schainUrlVal;
+                    dpDetails.schain = getSchainGdprCcpaVal(dpDetails.schainDocVal, schainUrlVal);
+
+                    dpDetails.gvlIdJsonVal = getTcf2JsonVal(displayCode);
+
+                    let toMatchDp = new RegExp(dp, 'gi');
+                    let dpData = allReqUrlResult.tcf2SupportedDps.match(toMatchDp);
+                    if (dpData != null) {
+                      dpDetails.tcf2Val = true;
+                    } else {
+                      dpDetails.tcf2Val = false;
+                    }
+                    
+                    console.log('DP DETAILS-------', dpDetails)
+                    innerWcallback(null)
+
+                  }
+                ], (err, result) => {
+                  if (err) {
+                    pCallback(err)
+                  } else {
+                    pCallback(null);
+                  }
+                })
               },
               // generate js link with line number for isBidRequestValid function
               getJsUrl: function (pCallback) {
@@ -302,7 +323,7 @@ async.waterfall(
         },
         function (err, aRes) {
           try {
-            console.log('dpUrlArray---',dpUrlArray)
+            console.log('dpUrlArray---', dpUrlArray)
             const ws = XLSX.utils.json_to_sheet(dpUrlArray);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "PrebidDpDetails");
@@ -330,22 +351,22 @@ async.waterfall(
 
 
 
-function stringToBoolean(str){
-  switch(str.toLowerCase().trim()){
-      case "true": case "yes": case "1": case "required": return true;
-      case "false": case "no": case "0": case null: case "optional": return false;
-      default: return "Recheck this field type manually";
+function stringToBoolean(str) {
+  switch (str.toLowerCase().trim()) {
+    case "true": case "yes": case "1": case "required": return true;
+    case "false": case "no": case "0": case null: case "optional": return false;
+    default: return "Recheck this field type manually";
   }
 }
 
-function chooseParamType(str){
-  switch(str.toLowerCase().trim()){
-      case "integer": case "float": case "number": case "numeric": return "NUMERIC";
-      case "object":  return "OBJECT";
-      case "boolean":  return "BOOLEAN";
-      case "array":  return "ARRAY";
-      case "string":  return "STRING";
-      default: return "Recheck this field type manually";
+function chooseParamType(str) {
+  switch (str.toLowerCase().trim()) {
+    case "integer": case "float": case "number": case "numeric": return "NUMERIC";
+    case "object": return "OBJECT";
+    case "boolean": return "BOOLEAN";
+    case "array": return "ARRAY";
+    case "string": return "STRING";
+    default: return "Recheck this field type manually";
   }
 }
 
