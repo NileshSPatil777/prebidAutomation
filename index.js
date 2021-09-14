@@ -320,12 +320,11 @@ async.waterfall(
             console.log("Check PrebidDpDetails of file dp_list_test.xlsx ");
           } catch (err) {
             const message = err.message;
-            if (message.includes("already exists")) {
-              console.log(
-                "Please delete PrebidDpDetails inside xlsx file and try again!"
-              );
-            } else {
-              console.log("Please retry after resolution of error:", message);
+            const code = err.code;
+           if(code ==="EBUSY"){
+            console.log(`Please close the file ${fileName} and try again!`);
+           } else {
+            console.log("Please retry after resolution of error:", message);
             }
           }
         },
@@ -334,7 +333,10 @@ async.waterfall(
     },
   ],
   function (err, result) {
-    console.log("End err,result", err, result);
+    if (err){
+      console.log("Error Occored",err.message || err);
+    } else
+    console.log("Processing>>>>>");
   }
 );
 

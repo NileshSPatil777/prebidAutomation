@@ -27,7 +27,6 @@ function getSchainGdprCcpaVal(docVal, urlVal) {
 }
 
 function getTcf2Val(tcf2DocVal, gvlIdDocVal,gvlIdJsonVal) {
-  console.log("tcf2DocVal, gvlIdDocVal,gvlIdJsonVal----->",tcf2DocVal, gvlIdDocVal,gvlIdJsonVal,typeof gvlIdDocVal,typeof gvlIdJsonVal);
   if (tcf2DocVal=== true && (typeof(gvlIdDocVal)==="number" || typeof(gvlIdJsonVal)==="number")){
     return true;
   } else if(tcf2DocVal=== false && (typeof(gvlIdDocVal)==="string" || typeof(gvlIdJsonVal)==="string")){
@@ -42,7 +41,6 @@ function getTcf2JsonVal(dpname,allReqUrlResult) {
     const map = new Map(Object.entries(vendor));
     if (map.get("name").includes(dpname)) {
       GVLid = map.get("id");
-      // console.log(GVLid);
       return GVLid;
     }
   }
