@@ -15,7 +15,7 @@ const gdprDocUrl = "https://docs.prebid.org/dev-docs/modules/consentManagement.h
 const ccpaDocUrl = "https://docs.prebid.org/dev-docs/modules/consentManagementUsp.html#adapters-supporting-us-privacy--ccpa";
 const schainUrl = "https://docs.prebid.org/dev-docs/modules/schain.html";
 const dpUrlArray = [];
-var readMeUrl, jsUrl,GVLid;
+var readMeUrl, jsUrl, GVLid;
 
 async.waterfall(
   [
@@ -76,18 +76,18 @@ async.waterfall(
             }
           })
         },
-        tcf2JsonGvl: function(outerPcallback){
+        tcf2JsonGvl: function (outerPcallback) {
           let tcf2JsonUrl = "https://vendor-list.consensu.org/v2/vendor-list.json";
-            let options = { json: true };
-            request(tcf2JsonUrl, options, (error, res, body) => {
-              if (error) {
-                outerPcallback("Absent","");
-              }
-              else {
-                outerPcallback(null,body);
-              }
-        })
-      }
+          let options = { json: true };
+          request(tcf2JsonUrl, options, (error, res, body) => {
+            if (error) {
+              outerPcallback("Absent", "");
+            }
+            else {
+              outerPcallback(null, body);
+            }
+          })
+        }
       }, function (err, pResult) {
         console.log('---->> final p call back', pResult)
         //process.exit();
@@ -122,7 +122,7 @@ async.waterfall(
             }
           }
           async.parallel(
-            { 
+            {
               getPrebidDocUrl: function (pCallback) {
                 async.waterfall([
                   (innerWcallback) => {
@@ -180,9 +180,9 @@ async.waterfall(
                               if (index == nameIndex) {
                                 paramObj.paramName = params;
                               } else if (index == scopeIndex) {
-                                paramObj.required = params;
+                                paramObj.required = chooseParamType(params);
                               } else if (index == typeIndex) {
-                                paramObj.paramType = params;
+                                paramObj.paramType = chooseParamType(params);
                               }
 
                             })
@@ -200,8 +200,8 @@ async.waterfall(
                     })
                   },
                   (displayCode, innerWcallback) => {
-                    
-                    
+
+
                     gdprUrlVal = allReqUrlResult.gdprSupportedDps.includes(displayCode);
                     ccpaUrlVal = allReqUrlResult.ccpaSupportedDps.includes(displayCode);
 
@@ -223,7 +223,7 @@ async.waterfall(
                     } else {
                       dpDetails.tcf2Val = false;
                     }
-                    
+
                     console.log('DP DETAILS-------', dpDetails)
                     innerWcallback(null)
 
@@ -366,7 +366,9 @@ function chooseParamType(str) {
     case "boolean": return "BOOLEAN";
     case "array": return "ARRAY";
     case "string": return "STRING";
-    default: return "Recheck this field type manually";
+    case "required": return true;
+    case "optional": return false;
+    default: return str;
   }
 }
 
