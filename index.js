@@ -5,6 +5,7 @@ const async = require("async");
 const XLSX = require("xlsx");
 const cheerio = require("cheerio");
 const { val } = require("cheerio/lib/api/attributes");
+const commonService = require("./services/commonService");
 const version = "5.9.0";
 const fileName = "dp_list_test.xlsx";
 const workbook = XLSX.readFile(`./${fileName}`);
@@ -105,22 +106,9 @@ async.waterfall(
           //process.exit(); 
           let dpDetails = {};
           dpDetails.code = dp;
-          function getSchainGdprCcpaVal(docVal, urlVal) {
-            if (docVal == urlVal)
-              return urlVal;
-            else
-              return "Recheck";
-          }
-          function getTcf2JsonVal(dpname) {
-            for (const vendor of Object.values(allReqUrlResult.tcf2JsonGvl.vendors)) {
-              const map = new Map(Object.entries(vendor));
-              if (map.get("name").includes(dpname)) {
-                GVLid = map.get("id");
-                // console.log(GVLid);
-                return GVLid;
-              }
-            }
-          }
+          
+         
+
           async.parallel(
             {
               getPrebidDocUrl: function (pCallback) {
@@ -153,9 +141,9 @@ async.waterfall(
                           "tr:contains(Media Types)> td:nth-child(2)"
                         ).text();
 
-                        dpDetails.gdprDocVal = stringToBoolean(gdprDocVal);
-                        dpDetails.ccpaDocVal = stringToBoolean(ccpaDocVal);
-                        dpDetails.schainDocVal = stringToBoolean(schainDocVal);
+                        dpDetails.gdprDocVal = commonService.stringToBoolean(gdprDocVal);
+                        dpDetails.ccpaDocVal = commonService.stringToBoolean(ccpaDocVal);
+                        dpDetails.schainDocVal = commonService.stringToBoolean(schainDocVal);
                         dpDetails.gvlIdDocVal = gvlIdDocVal;
                         dpDetails.mediaTypesDocVal = mediaTypesDocVal;
                         var paramObjStr = "";
@@ -180,9 +168,9 @@ async.waterfall(
                               if (index == nameIndex) {
                                 paramObj.paramName = params;
                               } else if (index == scopeIndex) {
-                                paramObj.required = chooseParamType(params);
+                                paramObj.required = commonService.chooseParamType(params);
                               } else if (index == typeIndex) {
-                                paramObj.paramType = chooseParamType(params);
+                                paramObj.paramType = commonService.chooseParamType(params);
                               }
 
                             })
@@ -201,20 +189,19 @@ async.waterfall(
                   },
                   (displayCode, innerWcallback) => {
 
-
                     gdprUrlVal = allReqUrlResult.gdprSupportedDps.includes(displayCode);
                     ccpaUrlVal = allReqUrlResult.ccpaSupportedDps.includes(displayCode);
 
                     dpDetails.gdprUrlVal = gdprUrlVal;
-                    dpDetails.gdpr = getSchainGdprCcpaVal(dpDetails.gdprDocVal, gdprUrlVal);
+                    dpDetails.gdpr = commonService.getSchainGdprCcpaVal(dpDetails.gdprDocVal, gdprUrlVal);
 
                     dpDetails.ccpaUrlVal = ccpaUrlVal;
-                    dpDetails.ccpa = getSchainGdprCcpaVal(dpDetails.ccpaDocVal, ccpaUrlVal);
+                    dpDetails.ccpa = commonService.getSchainGdprCcpaVal(dpDetails.ccpaDocVal, ccpaUrlVal);
 
                     dpDetails.schainUrlVal = schainUrlVal;
-                    dpDetails.schain = getSchainGdprCcpaVal(dpDetails.schainDocVal, schainUrlVal);
+                    dpDetails.schain = commonService.getSchainGdprCcpaVal(dpDetails.schainDocVal, schainUrlVal);
 
-                    dpDetails.gvlIdJsonVal = getTcf2JsonVal(displayCode);
+                    dpDetails.gvlIdJsonVal = commonService.getTcf2JsonVal(displayCode,allReqUrlResult);
 
                     let toMatchDp = new RegExp(dp, 'gi');
                     let dpData = allReqUrlResult.tcf2SupportedDps.match(toMatchDp);
@@ -349,27 +336,4 @@ async.waterfall(
     console.log("End err,result", err, result);
   }
 );
-
-
-
-function stringToBoolean(str) {
-  switch (str.toLowerCase().trim()) {
-    case "true": case "yes": case "1": case "required": return true;
-    case "false": case "no": case "0": case null: case "optional": return false;
-    default: return "Recheck this field type manually";
-  }
-}
-
-function chooseParamType(str) {
-  switch (str.toLowerCase().trim()) {
-    case "integer": case "float": case "number": case "numeric": return "NUMERIC";
-    case "object": return "OBJECT";
-    case "boolean": return "BOOLEAN";
-    case "array": return "ARRAY";
-    case "string": return "STRING";
-    case "required": return true;
-    case "optional": return false;
-    default: return str;
-  }
-}
 
