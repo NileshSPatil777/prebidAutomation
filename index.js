@@ -324,7 +324,8 @@ async.waterfall(
         function (err, aRes) {
           try {
             console.log('dpUrlArray---', dpUrlArray)
-            const ws = XLSX.utils.json_to_sheet(dpUrlArray);
+            const ws = XLSX.utils.json_to_sheet(dpUrlArray,{header:["code","displayName","gdpr","ccpa","schain","tcf2Val","gvlIdDocVal","gvlIdJsonVal","mediaTypesDocVal","BidParams","allUrls","schainDocVal","schainUrlVal","gdprDocVal","gdprUrlVal","ccpaDocVal","ccpaUrlVal"]}
+            );
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "PrebidDpDetails");
             XLSX.writeFile(wb, `./${fileName}`);
