@@ -210,6 +210,7 @@ async.waterfall(
                     } else {
                       dpDetails.tcf2Val = false;
                     }
+                    dpDetails.tcf2 = commonService.getTcf2Val(dpDetails.tcf2Val, dpDetails.gvlIdDocVal, dpDetails.gvlIdJsonVal);
 
                     console.log('DP DETAILS-------', dpDetails)
                     innerWcallback(null)
@@ -311,7 +312,7 @@ async.waterfall(
         function (err, aRes) {
           try {
             console.log('dpUrlArray---', dpUrlArray)
-            const ws = XLSX.utils.json_to_sheet(dpUrlArray,{header:["code","displayName","gdpr","ccpa","schain","tcf2Val","gvlIdDocVal","gvlIdJsonVal","mediaTypesDocVal","BidParams","allUrls","schainDocVal","schainUrlVal","gdprDocVal","gdprUrlVal","ccpaDocVal","ccpaUrlVal"]}
+            const ws = XLSX.utils.json_to_sheet(dpUrlArray,{header:["code","displayName","gdpr","ccpa","schain","tcf2","BidParams","allUrls","mediaTypesDocVal","schainDocVal","schainUrlVal","gdprDocVal","gdprUrlVal","ccpaDocVal","ccpaUrlVal","tcf2Val","gvlIdDocVal","gvlIdJsonVal",]}
             );
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "PrebidDpDetails");

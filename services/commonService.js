@@ -20,10 +20,21 @@ function chooseParamType(str) {
 }
 
 function getSchainGdprCcpaVal(docVal, urlVal) {
-  if (docVal == urlVal)
+  if (docVal === urlVal)
     return urlVal;
   else
     return "Recheck";
+}
+
+function getTcf2Val(tcf2Val, gvlIdDocVal,gvlIdJsonVal) {
+  console.log("tcf2Val, gvlIdDocVal,gvlIdJsonVal----->",tcf2Val, gvlIdDocVal,gvlIdJsonVal,typeof gvlIdDocVal,typeof gvlIdJsonVal);
+  if (tcf2Val=== true && (typeof(gvlIdDocVal)==="number" || typeof(gvlIdJsonVal)==="number")){
+    return true;
+  } else if(tcf2Val=== false && (typeof(gvlIdDocVal)==="string" || typeof(gvlIdJsonVal)==="string")){
+    return false;
+  } else {
+    return "Recheck";
+  }
 }
 
 function getTcf2JsonVal(dpname,allReqUrlResult) {
@@ -41,5 +52,6 @@ module.exports = {
   chooseParamType: chooseParamType,
   stringToBoolean: stringToBoolean,
   getTcf2JsonVal: getTcf2JsonVal,
-  getSchainGdprCcpaVal: getSchainGdprCcpaVal
+  getSchainGdprCcpaVal: getSchainGdprCcpaVal,
+  getTcf2Val: getTcf2Val
 };
