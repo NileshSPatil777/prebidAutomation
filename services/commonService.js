@@ -26,11 +26,11 @@ function getSchainGdprCcpaVal(docVal, urlVal) {
     return "Recheck";
 }
 
-function getTcf2Val(tcf2Val, gvlIdDocVal,gvlIdJsonVal) {
-  console.log("tcf2Val, gvlIdDocVal,gvlIdJsonVal----->",tcf2Val, gvlIdDocVal,gvlIdJsonVal,typeof gvlIdDocVal,typeof gvlIdJsonVal);
-  if (tcf2Val=== true && (typeof(gvlIdDocVal)==="number" || typeof(gvlIdJsonVal)==="number")){
+function getTcf2Val(tcf2DocVal, gvlIdDocVal,gvlIdJsonVal) {
+  console.log("tcf2DocVal, gvlIdDocVal,gvlIdJsonVal----->",tcf2DocVal, gvlIdDocVal,gvlIdJsonVal,typeof gvlIdDocVal,typeof gvlIdJsonVal);
+  if (tcf2DocVal=== true && (typeof(gvlIdDocVal)==="number" || typeof(gvlIdJsonVal)==="number")){
     return true;
-  } else if(tcf2Val=== false && (typeof(gvlIdDocVal)==="string" || typeof(gvlIdJsonVal)==="string")){
+  } else if(tcf2DocVal=== false && (typeof(gvlIdDocVal)==="string" || typeof(gvlIdJsonVal)==="string")){
     return false;
   } else {
     return "Recheck";
