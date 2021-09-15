@@ -39,8 +39,8 @@ function getTcf2Val(tcf2UrlVal, gvlIdDocVal,gvlIdJsonVal) {
 }
 
 function getTcf2JsonVal(dpname,allReqUrlResult) {
-  var vendor = Object.values(allReqUrlResult.tcf2JsonGvl.vendors);
-  var result = vendor.find(obj => {
+  const vendor = Object.values(allReqUrlResult.tcf2JsonGvl.vendors);
+  let result = vendor.find(obj => {
     return obj.name.includes(dpname);
   })
   if(result)
