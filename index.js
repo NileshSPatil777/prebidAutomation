@@ -15,8 +15,9 @@ const baseUrl = `https://github.com/prebid/Prebid.js/blob/${version}/modules/`;
 const gdprDocUrl = "https://docs.prebid.org/dev-docs/modules/consentManagement.html#adapters-supporting-gdpr";
 const ccpaDocUrl = "https://docs.prebid.org/dev-docs/modules/consentManagementUsp.html#adapters-supporting-us-privacy--ccpa";
 const schainUrl = "https://docs.prebid.org/dev-docs/modules/schain.html";
+const tcf2JsonUrl = "https://vendor-list.consensu.org/v2/vendor-list.json";
 const dpUrlArray = [];
-var readMeUrl, jsUrl, GVLid;
+var readMeUrl, jsUrl;
 
 async.waterfall(
   [
@@ -26,7 +27,7 @@ async.waterfall(
       const xlData = XLSX.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
       let dpList = [];
       xlData.forEach((data) => { dpList.push(Object.values(data)[0]); });
-      let schainSupportedDps, gdprSupportedDps, ccpaSupportedDps, tcf2SupportedDps, gdprUrlVal, ccpaUrlVal, schainUrlVal;
+      let schainSupportedDps, gdprSupportedDps, ccpaSupportedDps, tcf2SupportedDps,tcf2SupportedJsonDps, gdprUrlVal, ccpaUrlVal, schainUrlVal;
       async.parallel({
         getSchainSupportedDPs: function (outerPcallback) {
           request(schainUrl, function (error, response, body) {
@@ -78,7 +79,6 @@ async.waterfall(
           })
         },
         tcf2JsonGvl: function (outerPcallback) {
-          let tcf2JsonUrl = "https://vendor-list.consensu.org/v2/vendor-list.json";
           let options = { json: true };
           request(tcf2JsonUrl, options, (error, res, body) => {
             if (error) {
@@ -90,7 +90,7 @@ async.waterfall(
           })
         }
       }, function (err, pResult) {
-        console.log('---->> final p call back', pResult)
+        //console.log('---->> final p call back', pResult)
         //process.exit();
         if (err) wCallback(err, dpList, pResult)
         else wCallback(null, dpList, pResult)
@@ -106,8 +106,6 @@ async.waterfall(
           //process.exit(); 
           let dpDetails = {};
           dpDetails.code = dp;
-          
-         
 
           async.parallel(
             {
@@ -200,17 +198,16 @@ async.waterfall(
 
                     dpDetails.schainUrlVal = schainUrlVal;
                     dpDetails.schain = commonService.getSchainGdprCcpaVal(dpDetails.schainDocVal, schainUrlVal);
-
                     dpDetails.gvlIdJsonVal = commonService.getTcf2JsonVal(displayCode,allReqUrlResult);
 
                     let toMatchDp = new RegExp(dp, 'gi');
                     let dpData = allReqUrlResult.tcf2SupportedDps.match(toMatchDp);
                     if (dpData != null) {
-                      dpDetails.tcf2DocVal = true;
+                      dpDetails.tcf2UrlVal = true;
                     } else {
-                      dpDetails.tcf2DocVal = false;
+                      dpDetails.tcf2UrlVal = false;
                     }
-                    dpDetails.tcf2 = commonService.getTcf2Val(dpDetails.tcf2DocVal, dpDetails.gvlIdDocVal, dpDetails.gvlIdJsonVal);
+                    dpDetails.tcf2 = commonService.getTcf2Val(dpDetails.tcf2UrlVal, dpDetails.gvlIdDocVal, dpDetails.gvlIdJsonVal);
 
                     console.log('DP DETAILS-------', dpDetails)
                     innerWcallback(null)
@@ -298,35 +295,15 @@ async.waterfall(
               }
             },
             function (err, results) {
-              let allUrls = `${dpDetails.prebiDocUrl} \n${dpDetails.jsUrl} \n${dpDetails.mdUrl} \n${dpDetails.logoUrl} `;
-              delete dpDetails.prebiDocUrl;
-              delete dpDetails.mdUrl;
-              delete dpDetails.jsUrl;
-              delete dpDetails.logoUrl;
-              dpDetails.allUrls = allUrls;
+              commonService.getAllUrls(dpDetails);
               dpUrlArray.push(dpDetails);
               eCallback(null);
             }
           );
         },
         function (err, aRes) {
-          try {
-            console.log('dpUrlArray---', dpUrlArray)
-            const ws = XLSX.utils.json_to_sheet(dpUrlArray,{header:["code","displayName","gdpr","ccpa","schain","tcf2","BidParams","allUrls","mediaTypesDocVal","schainDocVal","schainUrlVal","gdprDocVal","gdprUrlVal","ccpaDocVal","ccpaUrlVal","tcf2DocVal","gvlIdDocVal","gvlIdJsonVal",]}
-            );
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "PrebidDpDetails");
-            XLSX.writeFile(wb, `./${fileName}`);
-            console.log("Check PrebidDpDetails of file dp_list_test.xlsx ");
-          } catch (err) {
-            const message = err.message;
-            const code = err.code;
-           if(code ==="EBUSY"){
-            console.log(`Please close the file ${fileName} and try again!`);
-           } else {
-            console.log("Please retry after resolution of error:", message);
-            }
-          }
+          commonService.generateOutputFile(dpUrlArray,fileName);
+          
         },
         wCallback(null)
       );
