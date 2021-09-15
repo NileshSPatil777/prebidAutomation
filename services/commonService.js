@@ -39,13 +39,12 @@ function getTcf2Val(tcf2UrlVal, gvlIdDocVal,gvlIdJsonVal) {
 }
 
 function getTcf2JsonVal(dpname,allReqUrlResult) {
-  for (const vendor of Object.values(allReqUrlResult.tcf2JsonGvl.vendors)) {
-    const map = new Map(Object.entries(vendor));
-    if (map.get("name").includes(dpname)) {
-      let gvlId = map.get("id");
-      return gvlId;
-    }
-  }
+  var vendor = Object.values(allReqUrlResult.tcf2JsonGvl.vendors);
+  var result = vendor.find(obj => {
+    return obj.name.includes(dpname);
+  })
+  if(result)
+   return (result.id);
 }
 
 
