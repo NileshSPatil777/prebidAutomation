@@ -39,13 +39,20 @@ function getTcf2Val(tcf2UrlVal, gvlIdDocVal,gvlIdJsonVal) {
 }
 
 function getTcf2JsonVal(dpname,allReqUrlResult) {
-  for (const vendor of Object.values(allReqUrlResult.tcf2JsonGvl.vendors)) {
-    const map = new Map(Object.entries(vendor));
-    if (map.get("name").includes(dpname)) {
-      let gvlId = map.get("id");
-      return gvlId;
-    }
+  if(dpname){
+  let demandPartner = new RegExp(dpname,'i');
+  let result = allReqUrlResult.tcf2JsonGvl.find(obj => {
+    return obj.name.match(demandPartner);
+  })
+  if(result)
+   return (result.id);
+  else {
+    return null;
   }
+}
+else{
+  return "Display code absent";
+}
 }
 
 

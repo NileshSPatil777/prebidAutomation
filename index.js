@@ -7,7 +7,7 @@ const cheerio = require("cheerio");
 const { val } = require("cheerio/lib/api/attributes");
 const commonService = require("./services/commonService");
 const version = "5.9.0";
-const fileName = "dp_list_test.xlsx";
+const fileName = "dp_list_test1.xlsx";
 const workbook = XLSX.readFile(`./${fileName}`);
 const docUrl = "https://docs.prebid.org/dev-docs/bidders/";
 const tcf2Link = "https://iabeurope.eu/vendor-list-tcf-v2-0/";
@@ -85,7 +85,7 @@ async.waterfall(
               outerPcallback("Absent", "");
             }
             else {
-              outerPcallback(null, body);
+              outerPcallback(null, Object.values(body.vendors));
             }
           })
         }
