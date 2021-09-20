@@ -166,11 +166,10 @@ async.waterfall(
                               if (index == nameIndex) {
                                 paramObj.paramName = params;
                               } else if (index == scopeIndex) {
-                                paramObj.required = commonService.chooseParamType(params);
+                                paramObj.required = commonService.paramRequire(params);
                               } else if (index == typeIndex) {
                                 paramObj.paramType = commonService.chooseParamType(params);
                               }
-
                             })
                             paramObjStr = paramObjStr.concat(JSON.stringify(paramObj));
                           });

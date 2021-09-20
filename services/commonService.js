@@ -1,5 +1,6 @@
 const XLSX = require("xlsx");
 
+
 function stringToBoolean(str) {
   switch (str.toLowerCase().trim()) {
     case "true": case "yes": case "1": case "required": return true;
@@ -8,15 +9,20 @@ function stringToBoolean(str) {
   }
 }
 
-function chooseParamType(str) {
+function paramRequire(str){
   switch (str.toLowerCase().trim()) {
-    case "integer": case "float": case "number": case "numeric": return "NUMERIC";
-    case "object": return "OBJECT";
-    case "boolean": return "BOOLEAN";
-    case "array": return "ARRAY";
-    case "string": return "STRING";
     case "required": return true;
     case "optional": return false;
+  }
+}
+
+function chooseParamType(str) {
+  switch (str.toLowerCase().trim()) {
+    case "integer": case "float": case "number": case "Number" :case "NUMERIC": case "Numeric" : case "int" : case "integer-" : case "Number[]" : case "Integer" : case "Integer / Integer[]" :case "Float" : case "Number[Number[]]" : case "decimal" : return "numeric" ;
+    case "object": case "Object" : return "object";
+    case "boolean": case "Boolean" : return "boolean";
+    case "array": return "array";
+    case "string": case "string[]" : case "[string]" : case "String" : case "String[]" :return "string";
     default: return str;
   }
 }
@@ -87,5 +93,6 @@ module.exports = {
   getSchainGdprCcpaVal: getSchainGdprCcpaVal,
   getTcf2Val: getTcf2Val,
   getAllUrls: getAllUrls,
-  generateOutputFile:generateOutputFile
+  generateOutputFile:generateOutputFile,
+  paramRequire : paramRequire
 };
