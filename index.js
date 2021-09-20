@@ -7,6 +7,8 @@ const cheerio = require("cheerio");
 const { val } = require("cheerio/lib/api/attributes");
 const commonService = require("./services/commonService");
 const { add } = require("cheerio/lib/api/traversing");
+const prebidDocService = require("./services/prebidDoc.service");
+const readmeMdService = require("./services/readmeMd.service");
 const version = "5.9.0";
 const fileName = "dp_list_test.xlsx";
 const workbook = XLSX.readFile(`./${fileName}`);
@@ -18,7 +20,7 @@ const ccpaDocUrl = "https://docs.prebid.org/dev-docs/modules/consentManagementUs
 const schainUrl = "https://docs.prebid.org/dev-docs/modules/schain.html";
 const tcf2JsonUrl = "https://vendor-list.consensu.org/v2/vendor-list.json";
 const dpUrlArray = [];
-var readMeUrl, jsUrl, bidParamObj, paramObjStr = "", paramObjArr = [];
+var readMeUrl, jsUrl, getPrebidDocInfoOuput;
 
 async.waterfall(
   [
@@ -28,7 +30,7 @@ async.waterfall(
       const xlData = XLSX.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
       let dpList = [];
       xlData.forEach((data) => { dpList.push(Object.values(data)[0]); });
-      let schainSupportedDps, gdprSupportedDps, ccpaSupportedDps, tcf2SupportedDps,tcf2SupportedJsonDps, gdprUrlVal, ccpaUrlVal, schainUrlVal;
+      let schainSupportedDps, gdprSupportedDps, ccpaSupportedDps, tcf2SupportedDps,tcf2SupportedJsonDps , schainUrlVal;
       async.parallel({
         getSchainSupportedDPs: function (outerPcallback) {
           request(schainUrl, function (error, response, body) {
@@ -70,7 +72,7 @@ async.waterfall(
           request(tcf2Link, function (error, response, body) {
             if (!error && response.statusCode == 200) {
               const $ = cheerio.load(body);
-              tcf2SupportedDps = $(`table:contains()`).text(); 
+              tcf2SupportedDps = $(`table:contains()`).text();
               outerPcallback(null, tcf2SupportedDps);
             } else {
               outerPcallback('Error', tcf2SupportedDps);
@@ -110,100 +112,18 @@ async.waterfall(
                   (innerWcallback) => {
                     request(docUrl + dp, function (error, response, body) {
                       if (!error && response.statusCode == 200) {
-                        const $ = cheerio.load(body);
-                        if ($('.bs-docs-section').find('h2').first()) {
-                          var displayCode = $('.bs-docs-section').find('h2').first().text();
-                          if (displayCode != undefined) {
-                            dpDetails.displayName = displayCode;
-                            schainUrlVal = allReqUrlResult.getSchainSupportedDPs.includes(dpDetails.displayName);
-                          }
-                        }
                         dpDetails.prebiDocUrl = docUrl + dp;
-                        const gdprDocVal = $(
-                          "tr:contains(GDPR TCF Support)> td:nth-child(4)"
-                        ).text();
-                        const ccpaDocVal = $(
-                          "tr:contains(USP/CCPA Support)> td:nth-child(4)"
-                        ).text();
-                        const schainDocVal = $(
-                          "tr:contains(Supply Chain Support)> td:nth-child(2)"
-                        ).text();
-                        const gvlIdDocVal = $(
-                          "tr:contains(IAB GVL ID)> td:nth-child(2)"
-                        ).text();
-                        const mediaTypesDocVal = $(
-                          "tr:contains(Media Types)> td:nth-child(2)"
-                        ).text();
-
-                        dpDetails.gdprDocVal = commonService.stringToBoolean(gdprDocVal);
-                        dpDetails.ccpaDocVal = commonService.stringToBoolean(ccpaDocVal);
-                        dpDetails.schainDocVal = commonService.stringToBoolean(schainDocVal);
-                        dpDetails.gvlIdDocVal = gvlIdDocVal;
-                        dpDetails.mediaTypesDocVal = mediaTypesDocVal;
-                        
-                        if ($('table:contains("Scope")')) {
-                          var nameIndex, scopeIndex, typeIndex;
-                          $('table:contains("Scope")').find('thead').each(function () {
-                            $(this).find('tr').find('th').each(function (headingIndex, headingElement) {
-                              if ($(this).text().match(/Name/g)) { nameIndex = headingIndex; }
-
-                              if ($(this).text().match(/Key/g)) { nameIndex = headingIndex; }
-
-                              if ($(this).text().match(/Scope/g)) { scopeIndex = headingIndex; }
-
-                              if ($(this).text().match(/Type/g)) { typeIndex = headingIndex; }
-                            })
-                          })
-                          var paramObj = {};
-                          $('table:contains("Scope")').find('tbody').find('tr').each(function (i, elem) {
-                            $(this).find('td').each(function (index, element) {
-                              var params = $(element).text();
-                              if (index == nameIndex) {
-                                paramObj.paramName = params;
-                              } else if (index == scopeIndex) {
-                                paramObj.required = commonService.chooseParamType(params);
-                              } else if (index == typeIndex) {
-                                paramObj.paramType = commonService.chooseParamType(params);
-                              }
-
-                            })
-                            paramObjArr.push(paramObj);
-                            paramObjStr = paramObjArr;
-                          });
-                        bidParamObj = paramObjStr;  
-                        dpDetails.BidParams = JSON.stringify(paramObjStr,null,4);
-                        }
-                        innerWcallback(null, displayCode);
+                        const $ = cheerio.load(body);
+                        getPrebidDocInfoOuput = prebidDocService.getPrebidDocInfo($,dpDetails);
+                        innerWcallback(null, dpDetails.displayName);
                       } else {
                         dpDetails.prebiDocUrl = "prebid doc url not found.";
                         innerWcallback(error, '');
                       }
                     })
                   },
-                  (displayCode, innerWcallback) => {
-
-                    gdprUrlVal = allReqUrlResult.gdprSupportedDps.includes(displayCode);
-                    ccpaUrlVal = allReqUrlResult.ccpaSupportedDps.includes(displayCode);
-
-                    dpDetails.gdprUrlVal = gdprUrlVal;
-                    dpDetails.gdpr = commonService.getSchainGdprCcpaVal(dpDetails.gdprDocVal, gdprUrlVal);
-
-                    dpDetails.ccpaUrlVal = ccpaUrlVal;
-                    dpDetails.ccpa = commonService.getSchainGdprCcpaVal(dpDetails.ccpaDocVal, ccpaUrlVal);
-
-                    dpDetails.schainUrlVal = schainUrlVal;
-                    dpDetails.schain = commonService.getSchainGdprCcpaVal(dpDetails.schainDocVal, schainUrlVal);
-                    dpDetails.gvlIdJsonVal = commonService.getTcf2JsonVal(displayCode,allReqUrlResult);
-
-                    let toMatchDp = new RegExp(dp, 'gi');
-                    let dpData = allReqUrlResult.tcf2SupportedDps.match(toMatchDp);
-                    if (dpData != null) {
-                      dpDetails.tcf2UrlVal = true;
-                    } else {
-                      dpDetails.tcf2UrlVal = false;
-                    }
-                    dpDetails.tcf2 = commonService.getTcf2Val(dpDetails.tcf2UrlVal, dpDetails.gvlIdDocVal, dpDetails.gvlIdJsonVal);
-
+                  (displayName, innerWcallback) => {
+                    commonService.getFinalgdprCcpaSchainTcf2(allReqUrlResult,dpDetails);
                     console.log('DP DETAILS-------', dpDetails)
                     innerWcallback(null)
 
@@ -244,44 +164,7 @@ async.waterfall(
                   if (!error && response.statusCode == 200) {
                     dpDetails.mdUrl = readMeUrl;
                     const $ = cheerio.load(body);
-                    if (
-                      $('div[id = "readme"]').find("p").find("a").attr("href")
-                    ) {
-                      var logo1 = $('div[id = "readme"]')
-                        .find("p")
-                        .find("a")
-                        .attr("href");
-                      if (logo1 != undefined) {
-                        var logoUrl = logo1.split("@")[1];
-                        dpDetails.logoUrl = "https://www." + logoUrl;
-                      }
-                    } else if (
-                      $(
-                        'div[class = "snippet-clipboard-content position-relative"]:contains("Maintainer")'
-                      )
-                        .find("pre")
-                        .find("code")
-                    ) {
-                      var logo2 = $(
-                        'div[class = "snippet-clipboard-content position-relative"]:contains("Maintainer")'
-                      )
-                        .find("pre")
-                        .find("code")
-                        .text();
-                      if (logo2 != undefined) {
-                        var logoUrl = logo2.split("@")[1];
-                        dpDetails.logoUrl = "https://www." + logoUrl;
-                      }
-                    } else {
-                      var logo3 = $('div[id = "readme"]')
-                        .find("ul")
-                        .find('li:contains("Maintainer")')
-                        .find("code")
-                        .text();
-                      if (logo3 != undefined) {
-                        dpDetails.logoUrl = "https://www." + logo3;
-                      }
-                    }
+                    readmeMdService.getLogoUrl($,dpDetails)
                   } else {
                     dpDetails.mdUrl = "md file url not found.";
                   }
@@ -293,7 +176,7 @@ async.waterfall(
               commonService.getAllUrls(dpDetails);
               let finalJsonObj = {};
               finalJsonObj = commonService.finalJsonFormat(dp,dpDetails.displayName,dpDetails.gdpr,dpDetails.tcf2,dpDetails.ccpa,dpDetails.schain);
-              finalJsonObj.params = bidParamObj;
+              finalJsonObj.params = getPrebidDocInfoOuput.bidParamObj;
               dpDetails.finalJson = JSON.stringify(finalJsonObj,null,4);
               dpUrlArray.push(dpDetails);
               eCallback(null);
@@ -315,4 +198,3 @@ async.waterfall(
     console.log("Processing>>>>>");
   }
 );
-
