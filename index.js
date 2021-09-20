@@ -6,6 +6,7 @@ const XLSX = require("xlsx");
 const cheerio = require("cheerio");
 const { val } = require("cheerio/lib/api/attributes");
 const commonService = require("./services/commonService");
+const { add } = require("cheerio/lib/api/traversing");
 const prebidDocService = require("./services/prebidDoc.service");
 const readmeMdService = require("./services/readmeMd.service");
 const version = "5.9.0";
@@ -19,7 +20,7 @@ const ccpaDocUrl = "https://docs.prebid.org/dev-docs/modules/consentManagementUs
 const schainUrl = "https://docs.prebid.org/dev-docs/modules/schain.html";
 const tcf2JsonUrl = "https://vendor-list.consensu.org/v2/vendor-list.json";
 const dpUrlArray = [];
-var readMeUrl, jsUrl;
+var readMeUrl, jsUrl, getPrebidDocInfoOuput;
 
 async.waterfall(
   [
@@ -90,8 +91,6 @@ async.waterfall(
           })
         }
       }, function (err, pResult) {
-        //console.log('---->> final p call back', pResult)
-        //process.exit();
         if (err) wCallback(err, dpList, pResult)
         else wCallback(null, dpList, pResult)
       })
@@ -102,8 +101,7 @@ async.waterfall(
       async.eachSeries(
         dpList,
         function (dp, eCallback) {
-          console.log('Processing for -->>', dp)
-          //process.exit(); 
+          console.log('Processing for -->>', dp) 
           let dpDetails = {};
           dpDetails.code = dp;
 
@@ -116,7 +114,7 @@ async.waterfall(
                       if (!error && response.statusCode == 200) {
                         dpDetails.prebiDocUrl = docUrl + dp;
                         const $ = cheerio.load(body);
-                        prebidDocService.getPrebidDocInfo($,dpDetails);
+                        getPrebidDocInfoOuput = prebidDocService.getPrebidDocInfo($,dpDetails);
                         innerWcallback(null, dpDetails.displayName);
                       } else {
                         dpDetails.prebiDocUrl = "prebid doc url not found.";
@@ -176,6 +174,10 @@ async.waterfall(
             },
             function (err, results) {
               commonService.getAllUrls(dpDetails);
+              let finalJsonObj = {};
+              finalJsonObj = commonService.finalJsonFormat(dp,dpDetails.displayName,dpDetails.gdpr,dpDetails.tcf2,dpDetails.ccpa,dpDetails.schain);
+              finalJsonObj.params = getPrebidDocInfoOuput.bidParamObj;
+              dpDetails.finalJson = JSON.stringify(finalJsonObj,null,4);
               dpUrlArray.push(dpDetails);
               eCallback(null);
             }
@@ -191,7 +193,7 @@ async.waterfall(
   ],
   function (err, result) {
     if (err){
-      console.log("Error Occored",err.message || err);
+      console.log("Error Occurred",err.message || err);
     } else
     console.log("Processing>>>>>");
   }
