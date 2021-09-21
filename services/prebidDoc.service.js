@@ -1,5 +1,6 @@
 
 const commonService = require("./commonService");
+var paramObjStr = "", paramObjArr = [], paramObj = {};;
 
 function getPrebidDocInfo($, dpDetails) {
 
@@ -32,8 +33,6 @@ function getPrebidDocInfo($, dpDetails) {
   dpDetails.gvlIdDocVal = gvlIdDocVal;
   dpDetails.mediaTypesDocVal = mediaTypesDocVal;
 
-  var paramObjStr = "";
-
   if ($('table:contains("Scope")')) {
     var nameIndex, scopeIndex, typeIndex;
     $('table:contains("Scope")').find('thead').each(function () {
@@ -47,7 +46,7 @@ function getPrebidDocInfo($, dpDetails) {
         if ($(this).text().match(/Type/g)) { typeIndex = headingIndex; }
       })
     })
-    var paramObj = {};
+  
     $('table:contains("Scope")').find('tbody').find('tr').each(function (i, elem) {
       $(this).find('td').each(function (index, element) {
         var params = $(element).text();
@@ -68,14 +67,13 @@ function getPrebidDocInfo($, dpDetails) {
           } 
         }
       })
-      paramObjStr = paramObjStr.concat(JSON.stringify(paramObj));
+      paramObjArr.push(paramObj);
+      paramObjStr = paramObjArr;
     });
   }
-  paramObjStr = paramObjStr.replace("\"", "");
-  paramObjStr = paramObjStr.replace("}/g", "},");
-  dpDetails.BidParams = paramObjStr;
-
-  return dpDetails;
+  bidParamObj = paramObjStr;  
+  dpDetails.BidParams = JSON.stringify(paramObjStr,null,4);
+  return {dpDetails:dpDetails, bidParamObj:bidParamObj};
 }
 module.exports = {
   getPrebidDocInfo: getPrebidDocInfo
