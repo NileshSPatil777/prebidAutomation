@@ -1,6 +1,6 @@
 
 const commonService = require("./commonService");
-var paramObjStr = "", paramObjArr = [], paramObj = {};;
+var paramObjStr = "", paramObjArr = [];
 
 function getPrebidDocInfo($, dpDetails) {
 
@@ -48,6 +48,7 @@ function getPrebidDocInfo($, dpDetails) {
     })
   
     $('table:contains("Scope")').find('tbody').find('tr').each(function (i, elem) {
+      let paramObj = {};
       $(this).find('td').each(function (index, element) {
         var params = $(element).text();
         if (index == nameIndex) {
