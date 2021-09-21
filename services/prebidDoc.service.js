@@ -56,9 +56,17 @@ function getPrebidDocInfo($, dpDetails) {
         } else if (index == scopeIndex) {
           paramObj.required = commonService.paramRequire(params);
         } else if (index == typeIndex) {
-          paramObj.paramType = commonService.chooseParamType(params);
+          if(typeof(commonService.chooseParamType(params)) == 'string'){
+            delete paramObj.subType;
+            paramObj.paramType = commonService.chooseParamType(params);
+          }else if(typeof(commonService.chooseParamType(params)) == 'object'){
+            paramObj.paramType = commonService.chooseParamType(params).type;
+            paramObj.subType = commonService.chooseParamType(params).subType;
+          }else if(typeof(commonService.chooseParamType(params)) == 'number'){
+            delete paramObj.subType;
+            paramObj.paramType = "Check Manually";
+          } 
         }
-
       })
       paramObjStr = paramObjStr.concat(JSON.stringify(paramObj));
     });

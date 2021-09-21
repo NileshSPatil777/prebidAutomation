@@ -16,14 +16,29 @@ function paramRequire(str){
   }
 }
 
-function chooseParamType(str) {
-  switch (str.toLowerCase().trim()) {
-    case "integer": case "float": case "number": case "Number" :case "NUMERIC": case "Numeric" : case "int" : case "integer-" : case "Number[]" : case "Integer" : case "Integer / Integer[]" :case "Float" : case "Number[Number[]]" : case "decimal" : return "numeric" ;
-    case "object": case "Object" : return "object";
-    case "boolean": case "Boolean" : return "boolean";
-    case "array": return "array";
-    case "string": case "string[]" : case "[string]" : case "String" : case "String[]" :return "string";
-    default: return str;
+function chooseParamType(str){
+  let lowerStr = str.toLowerCase().trim();
+  if(lowerStr.includes('[]') || lowerStr.includes('[') ||  lowerStr.includes(']') ||  lowerStr.match(/array/gi) ||  lowerStr.includes('<')){
+    /**Its Array */
+    if(lowerStr.match(/string/gi)){
+      return {type : "ARRAY", subType : "STRING"};
+    } else if(lowerStr.match(/integer/gi) || lowerStr.match(/int/gi) || lowerStr.match(/float/gi) || lowerStr.match(/number/gi)){
+      return {type : "ARRAY", subType : "NUMERIC"};
+    } else {
+      return {type : "ARRAY", subType : "Not Available"};
+    }
+  } else if(lowerStr.match(/integer/gi)  || (lowerStr.match(/float/gi)) || (lowerStr.match(/number/gi)) || (lowerStr.match(/int/gi)) || (lowerStr.match(/decimal/gi))){
+    /** Its Numeric */
+    return "NUMERIC";
+  } else if(lowerStr.match(/string/gi)){
+    return "STRING";
+  } else if(lowerStr.match(/object/gi)){
+    return "OBJECT";
+  } else if(lowerStr.match(/boolean/gi)){
+    return "BOOLEAN";
+  }
+  else{
+    return 0;
   }
 }
 
