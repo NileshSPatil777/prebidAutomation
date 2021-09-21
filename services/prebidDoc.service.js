@@ -1,6 +1,5 @@
 
 const commonService = require("./commonService");
-var paramObjStr = "";
 
 function getPrebidDocInfo($, dpDetails) {
 
