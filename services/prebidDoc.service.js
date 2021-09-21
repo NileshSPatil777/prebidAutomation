@@ -1,6 +1,6 @@
 
 const commonService = require("./commonService");
-var paramObjStr = "", paramObjArr = [];
+var paramObjStr = "";
 
 function getPrebidDocInfo($, dpDetails) {
 
@@ -46,9 +46,9 @@ function getPrebidDocInfo($, dpDetails) {
         if ($(this).text().match(/Type/g)) { typeIndex = headingIndex; }
       })
     })
-  
+    var paramObjArr = [];
     $('table:contains("Scope")').find('tbody').find('tr').each(function (i, elem) {
-      let paramObj = {};
+      var paramObj = {};
       $(this).find('td').each(function (index, element) {
         var params = $(element).text();
         if (index == nameIndex) {
@@ -61,11 +61,10 @@ function getPrebidDocInfo($, dpDetails) {
 
       })
       paramObjArr.push(paramObj);
-      paramObjStr = paramObjArr;
     });
   }
-  bidParamObj = paramObjStr;  
-  dpDetails.BidParams = JSON.stringify(paramObjStr,null,4);
+  bidParamObj = paramObjArr;  
+  dpDetails.BidParams = JSON.stringify(paramObjArr,null,4);
   return {dpDetails:dpDetails, bidParamObj:bidParamObj};
 }
 module.exports = {
