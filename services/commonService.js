@@ -42,6 +42,10 @@ function chooseParamType(str){
   }
 }
 
+function changeParamName(str){
+  /**Remove star from param name */
+}
+
 function deriveFinalValue(docVal, urlVal) {
   if (docVal === urlVal)
     return urlVal;
