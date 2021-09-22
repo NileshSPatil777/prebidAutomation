@@ -62,6 +62,7 @@ function getPrebidDocInfo($, dpDetails) {
       paramObjArr.push(paramObj);
     });
   }
+  dpDetails.BidParams = JSON.stringify(paramObjArr,null,4);
   dpDetails.bidParamObj = paramObjArr;  
   return dpDetails;
 }

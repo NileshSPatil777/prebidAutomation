@@ -84,7 +84,7 @@ function finalJsonFormat(dpDetails){
 function generateOutputFile(dpUrlArray, fileName) {
   try {
     //console.log('dpUrlArray---', dpUrlArray)
-    const ws = XLSX.utils.json_to_sheet(dpUrlArray, { header: ["code", "displayName", "gdpr", "ccpa", "schain", "tcf2", "allUrls","newDpList","finalJson", "mediaTypesDocVal", "schainDocVal", "schainUrlVal", "gdprDocVal", "gdprUrlVal", "ccpaDocVal", "ccpaUrlVal", "tcf2UrlVal", "gvlIdDocVal", "gvlIdJsonVal"] }
+    const ws = XLSX.utils.json_to_sheet(dpUrlArray, { header: ["code", "displayName", "gdpr", "ccpa", "schain", "tcf2", "BidParams","allUrls","newDpList","finalJson", "mediaTypesDocVal", "schainDocVal", "schainUrlVal", "gdprDocVal", "gdprUrlVal", "ccpaDocVal", "ccpaUrlVal", "tcf2UrlVal", "gvlIdDocVal", "gvlIdJsonVal"] }
     );
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "PrebidDpDetails");
