@@ -4,9 +4,7 @@ const request = require("request");
 const async = require("async");
 const XLSX = require("xlsx");
 const cheerio = require("cheerio");
-const { val } = require("cheerio/lib/api/attributes");
 const commonService = require("./services/commonService");
-const { add } = require("cheerio/lib/api/traversing");
 const prebidDocService = require("./services/prebidDoc.service");
 const readmeMdService = require("./services/readmeMd.service");
 const version = "5.9.0";
@@ -20,7 +18,7 @@ const ccpaDocUrl = "https://docs.prebid.org/dev-docs/modules/consentManagementUs
 const schainUrl = "https://docs.prebid.org/dev-docs/modules/schain.html";
 const tcf2JsonUrl = "https://vendor-list.consensu.org/v2/vendor-list.json";
 const dpUrlArray = [];
-var readMeUrl, jsUrl, getPrebidDocInfoOuput;
+var readMeUrl, jsUrl;
 
 async.waterfall(
   [
@@ -30,7 +28,7 @@ async.waterfall(
       const xlData = XLSX.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
       let dpList = [];
       xlData.forEach((data) => { dpList.push(Object.values(data)[0]); });
-      let schainSupportedDps, gdprSupportedDps, ccpaSupportedDps, tcf2SupportedDps,tcf2SupportedJsonDps , schainUrlVal;
+      let schainSupportedDps, gdprSupportedDps, ccpaSupportedDps, tcf2SupportedDps;
       async.parallel({
         getSchainSupportedDPs: function (outerPcallback) {
           request(schainUrl, function (error, response, body) {
@@ -114,7 +112,7 @@ async.waterfall(
                       if (!error && response.statusCode == 200) {
                         dpDetails.prebiDocUrl = docUrl + dp;
                         const $ = cheerio.load(body);
-                        getPrebidDocInfoOuput = prebidDocService.getPrebidDocInfo($,dpDetails);
+                        prebidDocService.getPrebidDocInfo($,dpDetails);
                         innerWcallback(null, dpDetails.displayName);
                       } else {
                         dpDetails.prebiDocUrl = "prebid doc url not found.";
@@ -174,10 +172,7 @@ async.waterfall(
             },
             function (err, results) {
               commonService.getAllUrls(dpDetails);
-              let finalJsonObj = {};
-              finalJsonObj = commonService.finalJsonFormat(dp,dpDetails.displayName,dpDetails.gdpr,dpDetails.tcf2,dpDetails.ccpa,dpDetails.schain);
-              finalJsonObj.params = getPrebidDocInfoOuput.bidParamObj;
-              dpDetails.finalJson = JSON.stringify(finalJsonObj,null,4);
+              commonService.finalJsonFormat(dpDetails);
               dpUrlArray.push(dpDetails);
               eCallback(null);
             }
