@@ -1,5 +1,3 @@
-//v1.2
-
 const request = require("request");
 const async = require("async");
 const XLSX = require("xlsx");
@@ -7,16 +5,10 @@ const cheerio = require("cheerio");
 const commonService = require("./services/commonService");
 const prebidDocService = require("./services/prebidDoc.service");
 const readmeMdService = require("./services/readmeMd.service");
-const version = "5.9.0";
-const fileName = "dp_list_test.xlsx";
-const workbook = XLSX.readFile(`./${fileName}`);
-const docUrl = "https://docs.prebid.org/dev-docs/bidders/";
-const tcf2Link = "https://iabeurope.eu/vendor-list-tcf-v2-0/";
-const baseUrl = `https://github.com/prebid/Prebid.js/blob/${version}/modules/`;
-const gdprDocUrl = "https://docs.prebid.org/dev-docs/modules/consentManagement.html#adapters-supporting-gdpr";
-const ccpaDocUrl = "https://docs.prebid.org/dev-docs/modules/consentManagementUsp.html#adapters-supporting-us-privacy--ccpa";
-const schainUrl = "https://docs.prebid.org/dev-docs/modules/schain.html";
-const tcf2JsonUrl = "https://vendor-list.consensu.org/v2/vendor-list.json";
+const config = require('config');
+const urls = config.get('urls');
+const workbook = XLSX.readFile(`./${config.fileName}`);
+const baseUrl = `https://github.com/prebid/Prebid.js/blob/${config.version}/modules/`;
 const dpUrlArray = [];
 var readMeUrl, jsUrl;
 
@@ -31,7 +23,7 @@ async.waterfall(
       let schainSupportedDps, gdprSupportedDps, ccpaSupportedDps, tcf2SupportedDps;
       async.parallel({
         getSchainSupportedDPs: function (outerPcallback) {
-          request(schainUrl, function (error, response, body) {
+          request(urls.schainUrl, function (error, response, body) {
             if (!error && response.statusCode == 200) {
               const $ = cheerio.load(body);
               if ($("body > div.container.pb-docs-container > div > div.col-lg-9 > div > div.adapters > div.schain_supported")) {
@@ -45,7 +37,7 @@ async.waterfall(
           });
         },
         gdprSupportedDps: function (outerPcallback) {
-          request(gdprDocUrl, function (error, response, body) {
+          request(urls.gdprDocUrl, function (error, response, body) {
             if (!error && response.statusCode == 200) {
               const $ = cheerio.load(body);
               gdprSupportedDps = ($('body').find('script:contains("idx_gdpr")').html());
@@ -56,7 +48,7 @@ async.waterfall(
           });
         },
         ccpaSupportedDps: function (outerPcallback) {
-          request(ccpaDocUrl, function (error, response, body) {
+          request(urls.ccpaDocUrl, function (error, response, body) {
             if (!error && response.statusCode == 200) {
               const $ = cheerio.load(body);
               ccpaSupportedDps = ($('body').find('script:contains("idx_usp")').html());
@@ -67,7 +59,7 @@ async.waterfall(
           });
         },
         tcf2SupportedDps: function (outerPcallback) {
-          request(tcf2Link, function (error, response, body) {
+          request(urls.tcf2Link, function (error, response, body) {
             if (!error && response.statusCode == 200) {
               const $ = cheerio.load(body);
               tcf2SupportedDps = $(`table:contains()`).text();
@@ -79,7 +71,7 @@ async.waterfall(
         },
         tcf2JsonGvl: function (outerPcallback) {
           let options = { json: true };
-          request(tcf2JsonUrl, options, (error, res, body) => {
+          request(urls.tcf2JsonUrl, options, (error, res, body) => {
             if (error) {
               outerPcallback("Absent", "");
             }
@@ -108,9 +100,9 @@ async.waterfall(
               getPrebidDocUrl: function (pCallback) {
                 async.waterfall([
                   (innerWcallback) => {
-                    request(docUrl + dp, function (error, response, body) {
+                    request(urls.docUrl + dp, function (error, response, body) {
                       if (!error && response.statusCode == 200) {
-                        dpDetails.prebiDocUrl = docUrl + dp;
+                        dpDetails.prebiDocUrl = urls.docUrl + dp;
                         const $ = cheerio.load(body);
                         prebidDocService.getPrebidDocInfo($,dpDetails);
                         innerWcallback(null, dpDetails.displayName);
@@ -171,16 +163,14 @@ async.waterfall(
               }
             },
             function (err, results) {
-              commonService.getAllUrls(dpDetails);
-              commonService.finalJsonFormat(dpDetails);
+              commonService.getFinalDpDetails(dpDetails);
               dpUrlArray.push(dpDetails);
               eCallback(null);
             }
           );
         },
         function (err, aRes) {
-          commonService.generateOutputFile(dpUrlArray,fileName);
-          
+          commonService.generateOutputFile(dpUrlArray,config.fileName);
         },
         wCallback(null)
       );

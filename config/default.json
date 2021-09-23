@@ -1,0 +1,13 @@
+{
+    "version":"5.9.0",
+    "fileName":"new_dp_v5.9.xlsx",
+    "urls":{
+        "docUrl":"https://docs.prebid.org/dev-docs/bidders/",
+        "tcf2Link":"https://iabeurope.eu/vendor-list-tcf-v2-0/",
+        "gdprDocUrl":"https://docs.prebid.org/dev-docs/modules/consentManagement.html#adapters-supporting-gdpr",
+        "ccpaDocUrl":"https://docs.prebid.org/dev-docs/modules/consentManagementUsp.html#adapters-supporting-us-privacy--ccpa",
+        "schainUrl":"https://docs.prebid.org/dev-docs/modules/schain.html",
+        "tcf2JsonUrl":"https://vendor-list.consensu.org/v2/vendor-list.json"
+    }
+    
+}
