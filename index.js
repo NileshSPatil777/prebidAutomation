@@ -114,7 +114,6 @@ async.waterfall(
                   },
                   (displayName, innerWcallback) => {
                     commonService.getFinalgdprCcpaSchainTcf2(allReqUrlResult,dpDetails);
-                    console.log('DP DETAILS-------', dpDetails)
                     innerWcallback(null)
 
                   }

@@ -51,19 +51,36 @@ function getPrebidDocInfo($, dpDetails) {
       $(this).find('td').each(function (index, element) {
         var params = $(element).text();
         if (index == nameIndex) {
-          paramObj.paramName = params;
+          paramObj.paramName = commonService.changeParamName(params);
         } else if (index == scopeIndex) {
-          paramObj.required = commonService.chooseParamType(params);
+          paramObj.required = commonService.chooseRequired(params);
         } else if (index == typeIndex) {
-          paramObj.paramType = commonService.chooseParamType(params);
+          if(typeof(commonService.chooseParamType(params)) == 'string'){
+            delete paramObj.subType;
+            paramObj.paramType = commonService.chooseParamType(params);
+          }else if(typeof(commonService.chooseParamType(params)) == 'object'){
+            paramObj.paramType = commonService.chooseParamType(params).type;
+            paramObj.subType = commonService.chooseParamType(params).subType;
+          }else if(typeof(commonService.chooseParamType(params)) == 'number'){
+            delete paramObj.subType;
+            paramObj.paramType = "Check Manually";
+          } 
         }
-
       })
-      paramObjArr.push(paramObj);
+      if(paramObj.paramType == undefined){
+        paramObj.paramType = "Check Manually";
+      }
+      var found = paramObjArr.some((el) => {
+        if(el.paramName === paramObj.paramName){
+          el.paramType = "OBJECT"
+         }
+        return el.paramName === paramObj.paramName;
+  });
+  if (!found) { paramObjArr.push(paramObj); }
     });
   }
-  dpDetails.BidParams = JSON.stringify(paramObjArr,null,4);
   dpDetails.bidParamObj = paramObjArr;  
+  dpDetails.BidParams = JSON.stringify(paramObjArr,null,4);
   return dpDetails;
 }
 module.exports = {
