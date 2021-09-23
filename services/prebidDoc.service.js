@@ -45,9 +45,9 @@ function getPrebidDocInfo($, dpDetails) {
         if ($(this).text().match(/Type/g)) { typeIndex = headingIndex; }
       })
     })
-  var paramObjArr=[];
+    var paramObjArr = [];
     $('table:contains("Scope")').find('tbody').find('tr').each(function (i, elem) {
-      paramObj = {};
+      var paramObj = {};
       $(this).find('td').each(function (index, element) {
         var params = $(element).text();
         if (index == nameIndex) {
@@ -81,7 +81,7 @@ function getPrebidDocInfo($, dpDetails) {
   }
   bidParamObj = paramObjArr;  
   dpDetails.BidParams = JSON.stringify(paramObjArr,null,4);
-  return {dpDetails:dpDetails, bidParamObj:bidParamObj};
+  return dpDetails;
 }
 module.exports = {
   getPrebidDocInfo: getPrebidDocInfo

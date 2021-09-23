@@ -104,21 +104,26 @@ function getAllUrls(dpDetails) {
   return dpDetails;
 }
 
-function finalJsonFormat(dp,displayname,gdpr,tcf2,ccpa,schain){
+function finalJsonFormat(dpDetails){
+  console.log("dpDetails.allUrls  in finalJsonFormat",dpDetails.allUrls);
   const jsonObject = {};
-  jsonObject.code = dp;
-  jsonObject.displayName = displayname;
-  jsonObject.gdpr = gdpr;
-  jsonObject.tcf2 = tcf2;
-  jsonObject.ccpa = ccpa;
-  jsonObject.schain = schain;
-  return jsonObject;
+  jsonObject.code = dpDetails.code;
+  jsonObject.displayName = dpDetails.displayname;
+  jsonObject.gdpr = dpDetails.gdpr;
+  jsonObject.tcf2 = dpDetails.tcf2;
+  jsonObject.ccpa = dpDetails.ccpa;
+  jsonObject.schain = dpDetails.schain;
+  jsonObject.params = dpDetails.bidParamObj;
+  dpDetails.finalJson = JSON.stringify(jsonObject,null,4);
+  delete dpDetails.bidParamObj;
+  dpDetails.newDpList = `${dpDetails.allUrls} \n${dpDetails.finalJson}`;
+  return dpDetails;
 }
 
 function generateOutputFile(dpUrlArray, fileName) {
   try {
     //console.log('dpUrlArray---', dpUrlArray)
-    const ws = XLSX.utils.json_to_sheet(dpUrlArray, { header: ["code", "displayName", "gdpr", "ccpa", "schain", "tcf2", "BidParams", "allUrls", "mediaTypesDocVal", "schainDocVal", "schainUrlVal", "gdprDocVal", "gdprUrlVal", "ccpaDocVal", "ccpaUrlVal", "tcf2UrlVal", "gvlIdDocVal", "gvlIdJsonVal","finalJson"] }
+    const ws = XLSX.utils.json_to_sheet(dpUrlArray, { header: ["code", "displayName", "gdpr", "ccpa", "schain", "tcf2", "BidParams","allUrls","newDpList","finalJson", "mediaTypesDocVal", "schainDocVal", "schainUrlVal", "gdprDocVal", "gdprUrlVal", "ccpaDocVal", "ccpaUrlVal", "tcf2UrlVal", "gvlIdDocVal", "gvlIdJsonVal"] }
     );
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "PrebidDpDetails");
