@@ -94,18 +94,16 @@ function getTcf2JsonVal(dpname, allReqUrlResult) {
   }
 }
 
-function getAllUrls(dpDetails) {
-  let allUrls = `${dpDetails.prebiDocUrl} \n${dpDetails.jsUrl} \n${dpDetails.mdUrl} \n${dpDetails.logoUrl} `;
+function getFinalDpDetails(dpDetails) {
+  dpDetails.allUrls = `${dpDetails.prebiDocUrl} \n${dpDetails.jsUrl} \n${dpDetails.mdUrl} \n${dpDetails.logoUrl} `;
   delete dpDetails.prebiDocUrl;
   delete dpDetails.mdUrl;
   delete dpDetails.jsUrl;
   delete dpDetails.logoUrl;
-  dpDetails.allUrls = allUrls;
-  return dpDetails;
+  finalJsonFormat(dpDetails);
 }
 
 function finalJsonFormat(dpDetails){
-  console.log("dpDetails.allUrls  in finalJsonFormat",dpDetails.allUrls);
   const jsonObject = {};
   jsonObject.code = dpDetails.code;
   jsonObject.displayName = dpDetails.displayname;
@@ -169,7 +167,7 @@ module.exports = {
   getTcf2JsonVal: getTcf2JsonVal,
   getTcf2Val: getTcf2Val,
   getFinalgdprCcpaSchainTcf2: getFinalgdprCcpaSchainTcf2,
-  getAllUrls: getAllUrls,
+  getFinalDpDetails: getFinalDpDetails,
   finalJsonFormat: finalJsonFormat,
   generateOutputFile:generateOutputFile,
   deriveFinalValue: deriveFinalValue,
