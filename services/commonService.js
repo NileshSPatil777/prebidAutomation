@@ -1,4 +1,6 @@
+const { retry } = require("async");
 const XLSX = require("xlsx");
+
 
 function stringToBoolean(str) {
   switch (str.toLowerCase().trim()) {
@@ -8,17 +10,54 @@ function stringToBoolean(str) {
   }
 }
 
-function chooseParamType(str) {
-  switch (str.toLowerCase().trim()) {
-    case "integer": case "float": case "number": case "numeric": return "NUMERIC";
-    case "object": return "OBJECT";
-    case "boolean": return "BOOLEAN";
-    case "array": return "ARRAY";
-    case "string": return "STRING";
-    case "required": return true;
-    case "optional": return false;
-    default: return str;
+function chooseParamType(str){
+  let lowerStr = str.toLowerCase().trim();
+  if(lowerStr.includes('[]') || lowerStr.includes('[') ||  lowerStr.includes(']') ||  lowerStr.match(/array/gi) ||  lowerStr.includes('<')){
+    /**Its Array */
+    if(lowerStr.match(/string/gi)){
+      return {type : "ARRAY", subType : "STRING"};
+    } else if(lowerStr.match(/integer/gi) || lowerStr.match(/int/gi) || lowerStr.match(/float/gi) || lowerStr.match(/number/gi)){
+      return {type : "ARRAY", subType : "NUMERIC"};
+    } else {
+      return {type : "ARRAY", subType : "Not Available"};
+    }
+  } else if(lowerStr.match(/integer/gi)  || (lowerStr.match(/float/gi)) || (lowerStr.match(/number/gi)) || (lowerStr.match(/int/gi)) || (lowerStr.match(/decimal/gi))){
+    /** Its Numeric */
+    return "NUMERIC";
+  } else if(lowerStr.match(/string/gi)){
+    return "STRING";
+  } else if(lowerStr.match(/object/gi)){
+    return "OBJECT";
+  } else if(lowerStr.match(/boolean/gi)){
+    return "BOOLEAN";
   }
+  else{
+    return 0;
+  }
+}
+
+function chooseRequired(str){
+  let lowerStr = str.toLowerCase().trim();
+  if(lowerStr.match(/required/gi) && (lowerStr.length > 9)){
+    // its optional /
+    return false;
+  }
+  else if(lowerStr.match(/required/gi) || lowerStr.match(/highly recommended/gi)){
+    return true;
+  }
+  else if(lowerStr.match(/recommended/gi) || lowerStr.match(/optional/gi)){
+    return false;
+  }
+  else return false;
+}
+
+function changeParamName(str){
+  if(str.includes("*")) return str.replace("*","");
+  else if(str.includes(".")){
+    nameArr = str.split(".");
+    return nameArr[0];
+  }
+  else return str;
 }
 
 function deriveFinalValue(docVal, urlVal) {
@@ -134,5 +173,7 @@ module.exports = {
   finalJsonFormat: finalJsonFormat,
   generateOutputFile:generateOutputFile,
   deriveFinalValue: deriveFinalValue,
+  chooseRequired: chooseRequired,
+  changeParamName: changeParamName,
   generateOutputFile: generateOutputFile
 };

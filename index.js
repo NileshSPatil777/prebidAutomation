@@ -8,7 +8,7 @@ const commonService = require("./services/commonService");
 const prebidDocService = require("./services/prebidDoc.service");
 const readmeMdService = require("./services/readmeMd.service");
 const version = "5.9.0";
-const fileName = "dp_list_test.xlsx";
+const fileName = "dp_list_test1.xlsx";
 const workbook = XLSX.readFile(`./${fileName}`);
 const docUrl = "https://docs.prebid.org/dev-docs/bidders/";
 const tcf2Link = "https://iabeurope.eu/vendor-list-tcf-v2-0/";
@@ -122,7 +122,6 @@ async.waterfall(
                   },
                   (displayName, innerWcallback) => {
                     commonService.getFinalgdprCcpaSchainTcf2(allReqUrlResult,dpDetails);
-                    console.log('DP DETAILS-------', dpDetails)
                     innerWcallback(null)
 
                   }
