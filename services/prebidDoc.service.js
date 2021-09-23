@@ -1,6 +1,5 @@
 
 const commonService = require("./commonService");
-var paramObjStr = "", paramObjArr = [];
 
 function getPrebidDocInfo($, dpDetails) {
 
@@ -46,15 +45,15 @@ function getPrebidDocInfo($, dpDetails) {
         if ($(this).text().match(/Type/g)) { typeIndex = headingIndex; }
       })
     })
-  
+  var paramObjArr=[];
     $('table:contains("Scope")').find('tbody').find('tr').each(function (i, elem) {
       paramObj = {};
       $(this).find('td').each(function (index, element) {
         var params = $(element).text();
         if (index == nameIndex) {
-          paramObj.paramName = params;
+          paramObj.paramName = commonService.changeParamName(params);
         } else if (index == scopeIndex) {
-          paramObj.required = commonService.paramRequire(params);
+          paramObj.required = commonService.chooseRequired(params);
         } else if (index == typeIndex) {
           if(typeof(commonService.chooseParamType(params)) == 'string'){
             delete paramObj.subType;
@@ -68,12 +67,20 @@ function getPrebidDocInfo($, dpDetails) {
           } 
         }
       })
-      paramObjArr.push(paramObj);
-      paramObjStr = paramObjArr;
+      if(paramObj.paramType == undefined){
+        paramObj.paramType = "Check Manually";
+      }
+      var found = paramObjArr.some((el) => {
+        if(el.paramName === paramObj.paramName){
+          el.paramType = "OBJECT"
+         }
+        return el.paramName === paramObj.paramName;
+  });
+  if (!found) { paramObjArr.push(paramObj); }
     });
   }
-  bidParamObj = paramObjStr;  
-  dpDetails.BidParams = JSON.stringify(paramObjStr,null,4);
+  bidParamObj = paramObjArr;  
+  dpDetails.BidParams = JSON.stringify(paramObjArr,null,4);
   return {dpDetails:dpDetails, bidParamObj:bidParamObj};
 }
 module.exports = {

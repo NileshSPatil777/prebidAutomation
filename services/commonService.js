@@ -1,3 +1,4 @@
+const { retry } = require("async");
 const XLSX = require("xlsx");
 
 
@@ -6,13 +7,6 @@ function stringToBoolean(str) {
     case "true": case "yes": case "1": case "required": return true;
     case "false": case "no": case "0": case null: case "optional": return false;
     default: return "Recheck this field type manually";
-  }
-}
-
-function paramRequire(str){
-  switch (str.toLowerCase().trim()) {
-    case "required": return true;
-    case "optional": return false;
   }
 }
 
@@ -42,8 +36,28 @@ function chooseParamType(str){
   }
 }
 
+function chooseRequired(str){
+  let lowerStr = str.toLowerCase().trim();
+  if(lowerStr.match(/required/gi) && (lowerStr.length > 9)){
+    // its optional /
+    return false;
+  }
+  else if(lowerStr.match(/required/gi) || lowerStr.match(/highly recommended/gi)){
+    return true;
+  }
+  else if(lowerStr.match(/recommended/gi) || lowerStr.match(/optional/gi)){
+    return false;
+  }
+  else return false;
+}
+
 function changeParamName(str){
-  /**Remove star from param name */
+  if(str.includes("*")) return str.replace("*","");
+  else if(str.includes(".")){
+    nameArr = str.split(".");
+    return nameArr[0];
+  }
+  else return str;
 }
 
 function deriveFinalValue(docVal, urlVal) {
@@ -146,7 +160,6 @@ function getFinalgdprCcpaSchainTcf2(allReqUrlResult, dpDetails) {
 
 module.exports = {
   chooseParamType: chooseParamType,
-  paramRequire:paramRequire,
   stringToBoolean: stringToBoolean,
   getTcf2JsonVal: getTcf2JsonVal,
   getTcf2Val: getTcf2Val,
@@ -155,5 +168,7 @@ module.exports = {
   finalJsonFormat: finalJsonFormat,
   generateOutputFile:generateOutputFile,
   deriveFinalValue: deriveFinalValue,
+  chooseRequired: chooseRequired,
+  changeParamName: changeParamName,
   generateOutputFile: generateOutputFile
 };
