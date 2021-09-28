@@ -34,7 +34,7 @@ function getPrebidDocInfo($, dpDetails) {
 
   var paramObjArr = [];
   
-  if($('p').find('code:contains("string")')){
+  if($('p:contains("Name")').text() != ''){
     paramObjArr.push({paramName:"Check Manually", required:"Check Manually", paramType:"Check Manually"});
   }
 
