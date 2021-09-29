@@ -118,22 +118,25 @@ function finalJsonFormat(dpDetails){
   return dpDetails;
 }
 
-function generateOutputFile(dpUrlArray, fileName) {
+const wb = XLSX.utils.book_new();
+function generateOutputFile(dpUrlArray, fileName, sheetName, sheetOutputCallback) {
   try {
-    //console.log('dpUrlArray---', dpUrlArray)
+    console.log('dpUrlArray---', dpUrlArray)
     const ws = XLSX.utils.json_to_sheet(dpUrlArray, { header: ["code", "displayName", "gdpr", "ccpa", "schain", "tcf2", "BidParams","allUrls","newDpList","finalJson", "mediaTypesDocVal", "schainDocVal", "schainUrlVal", "gdprDocVal", "gdprUrlVal", "ccpaDocVal", "ccpaUrlVal", "tcf2UrlVal", "gvlIdDocVal", "gvlIdJsonVal"] }
     );
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "PrebidDpDetails");
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
     XLSX.writeFile(wb, `./${fileName}`);
-    console.log("Check PrebidDpDetails of file dp_list_test.xlsx ");
+    console.log("Check PrebidDpDetails of file dp_list_test.xlsx");
+    sheetOutputCallback(null);
   } catch (err) {
     const message = err.message;
     const code = err.code;
     if (code === "EBUSY") {
       console.log(`Please close the file ${fileName} and try again!`);
+      sheetOutputCallback(err);
     } else {
       console.log("Please retry after resolution of error:", message);
+      sheetOutputCallback(err);
     }
   }
 }
