@@ -188,10 +188,10 @@ async function prebidAutomation(dpList,sheetName,prebidAutomationCallback){
               },
               function (err, results) {
                 commonService.getFinalDpDetails(dpDetails);
+                console.log("type of-->>", typeof(dpDetails))
                 dpUrlArray.push(dpDetails); 
                 if(sheetName == "Added"){
-                  dpDetails.finalJson.displayName = dpDetails.displayName;
-                  newDpFinalListArray.push(dpDetails.finalJson);
+                  newDpFinalListArray.push(JSON.parse(dpDetails.finalJson));
                 }         
                 eCallback(null);
               }

@@ -106,7 +106,7 @@ function getFinalDpDetails(dpDetails) {
 function finalJsonFormat(dpDetails){
   const jsonObject = {};
   jsonObject.code = dpDetails.code;
-  jsonObject.displayName = dpDetails.displayname;
+  jsonObject.displayName = dpDetails.displayName;
   jsonObject.gdpr = dpDetails.gdpr;
   jsonObject.tcf2 = dpDetails.tcf2;
   jsonObject.ccpa = dpDetails.ccpa;
