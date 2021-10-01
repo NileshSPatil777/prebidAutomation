@@ -9,7 +9,8 @@ const config = require('config');
 const urls = config.get('urls');
 const workbook = XLSX.readFile(`./${config.fileName}`);
 const baseUrl = `https://github.com/prebid/Prebid.js/blob/${config.version}/modules/`;
-var dpList, dpUrlArray;
+const generateNewDPSql = require('../prebidAutomation/services/generateNewDPSql');
+var dpList, dpUrlArray,newDpFinalListArray= [];
 
 const sheet_name_list = workbook.SheetNames;
 // sheet_name_list.forEach(oneSheet => {const xlData = XLSX.utils.sheet_to_json(workbook.Sheets[oneSheet]);
@@ -27,6 +28,11 @@ async.eachSeries(sheet_name_list, (oneSheet, sheetReadCallback) => {
   });
 },function(err,result){
   console.log("Successful");
+  /** call to added dp script */
+  generateNewDPSql.getInputDpArray(newDpFinalListArray, function(err, success){
+    if(err) console.log("Error", err)
+    else console.log("Successful...")
+  })
 })
 
 async function prebidAutomation(dpList,sheetName,prebidAutomationCallback){
@@ -182,7 +188,11 @@ async function prebidAutomation(dpList,sheetName,prebidAutomationCallback){
               },
               function (err, results) {
                 commonService.getFinalDpDetails(dpDetails);
-                dpUrlArray.push(dpDetails);
+                dpUrlArray.push(dpDetails); 
+                if(sheetName == "Added"){
+                  dpDetails.finalJson.displayName = dpDetails.displayName;
+                  newDpFinalListArray.push(dpDetails.finalJson);
+                }         
                 eCallback(null);
               }
             );
@@ -206,13 +216,6 @@ async function prebidAutomation(dpList,sheetName,prebidAutomationCallback){
     }
   );
 }
-async function requestUrl(url,requestUrlCallback){
-  request(url, function (error, response, body) {
-    if (!error && response.statusCode == 200) {
-      const $ = cheerio.load(body);
-      requestUrlCallback(null,$)
-    } else {
-      requestUrlCallback(null);
-    }
-  });
-}
+
+
+//module.exports = newDpFinalListArray;
